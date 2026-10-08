@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: bjorm-demo
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/bjorm_demo}
+    username: ${DB_USER:bjorm}
+    password: ${DB_PASSWORD:bjorm}
+    hikari:
+      maximum-pool-size: 12
+      minimum-idle: 2
+      connection-timeout: 10000
+  sql:
+    init:
+      mode: always
+server:
+  port: ${PORT:8080}
+  error:
+    include-message: never

@@ -1,0 +1,66 @@
+name: build-and-postgres-e2e
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+  packages: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: bjorm
+          POSTGRES_PASSWORD: bjorm
+          POSTGRES_DB: bjorm_demo
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U bjorm -d bjorm_demo"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout pinned BJORM source
+        uses: actions/checkout@v4
+        with:
+          repository: rfdetoni/bjorm
+          ref: 303846f1dbe7a2a59b4751e9a1b088ee526d2bef
+          path: bjorm-lib
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+          server-id: github
+          server-username: GITHUB_ACTOR
+          server-password: GITHUB_TOKEN
+      - name: Install BJORM modules from pinned source
+        run: mvn -B -ntp -f bjorm-lib/pom.xml -pl bjorm-core,bjorm-processor,bjorm-spring-boot -am -DskipTests install
+      - name: Compile and test demo
+        run: mvn -B -ntp clean verify
+      - name: Check JavaScript syntax
+        run: node --check src/main/resources/static/app.js
+      - name: Run demo server
+        env:
+          DB_URL: jdbc:postgresql://localhost:5432/bjorm_demo
+          DB_USER: bjorm
+          DB_PASSWORD: bjorm
+        run: |
+          java -jar target/bjorm-demo-*.jar > /tmp/bjorm-demo.log 2>&1 &
+          echo $! > /tmp/bjorm-demo.pid
+      - name: Real HTTP / PostgreSQL acceptance
+        run: python3 scripts/smoke.py
+      - name: Publish snapshot to GitHub Packages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: mvn -B -ntp -DskipTests deploy
+      - name: Show logs on failure
+        if: failure()
+        run: cat /tmp/bjorm-demo.log 2>/dev/null || true

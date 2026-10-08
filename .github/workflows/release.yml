@@ -1,0 +1,60 @@
+name: release-demo
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Current snapshot version without -SNAPSHOT (e.g. 0.1.0)'
+        required: true
+        type: string
+permissions:
+  contents: write
+  packages: write
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Checkout pinned BJORM source
+        uses: actions/checkout@v4
+        with:
+          repository: rfdetoni/bjorm
+          ref: 303846f1dbe7a2a59b4751e9a1b088ee526d2bef
+          path: bjorm-lib
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+          server-id: github
+          server-username: GITHUB_ACTOR
+          server-password: GITHUB_TOKEN
+      - name: Install matching BJORM
+        run: mvn -B -ntp -f bjorm-lib/pom.xml -pl bjorm-core,bjorm-processor,bjorm-spring-boot -am -DskipTests install
+      - name: Check current snapshot, set release and calculate next version
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          python3 scripts/release_version.py check "$RELEASE_VERSION"
+          mvn -B -ntp org.codehaus.mojo:versions-maven-plugin:2.19.1:set -DnewVersion="$RELEASE_VERSION" -DgenerateBackupPoms=false
+      - name: Build and publish stable Maven package
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: mvn -B -ntp clean deploy
+      - name: Commit tagged release and advance development version
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add pom.xml
+          git commit -m "chore(release): v${RELEASE_VERSION}"
+          git tag "v${RELEASE_VERSION}"
+          git push --atomic origin HEAD:main "refs/tags/v${RELEASE_VERSION}"
+          NEXT_VERSION="$(python3 scripts/release_version.py next "$RELEASE_VERSION")"
+          mvn -B -ntp org.codehaus.mojo:versions-maven-plugin:2.19.1:set -DnewVersion="$NEXT_VERSION" -DgenerateBackupPoms=false
+          git add pom.xml
+          git commit -m "chore: begin ${NEXT_VERSION}"
+          git push origin HEAD:main

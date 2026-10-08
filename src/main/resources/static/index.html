@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#101923">
+  <title>BJORM Lab · CRUD &amp; Benchmark</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><div class="brand-mark">B<span>_</span></div><div><strong>BJORM <span>LAB</span></strong><small>BARE METAL JAVA ORM</small></div></div>
+    <div class="header-right"><span class="stack"><span class="live-dot"></span>Java 25 · Spring Boot 4 · PostgreSQL</span><a href="https://github.com/rfdetoni/bjorm" target="_blank" rel="noopener noreferrer">Biblioteca ↗</a></div>
+  </header>
+
+  <main class="layout">
+    <section class="intro">
+      <div><p class="eyebrow">DEMONSTRAÇÃO AO VIVO</p><h1>Persistência <em>sem peso.</em></h1>
+        <p>Opere dados reais com BJORM e compare a latência de transações com JDBC manual.</p></div>
+      <div class="summary-grid">
+        <div class="mini-stat"><span>PRODUTOS</span><strong id="stat-count">—</strong><small>Registros persistidos</small></div>
+        <div class="mini-stat"><span>ÚLTIMA REQUISIÇÃO</span><strong id="stat-latency">—</strong><small>ms · tempo HTTP</small></div>
+      </div>
+    </section>
+
+    <section class="workspace">
+      <div class="panel catalog">
+        <div class="panel-title"><div><p class="eyebrow">01 / PERSISTÊNCIA</p><h2>Catálogo de produtos</h2></div>
+          <button type="button" class="button secondary" id="seed-button">+ 250 registros de teste</button></div>
+        <div class="controls">
+          <label class="field search"><span>BUSCAR PELO NOME</span><input id="search" type="search" placeholder="Ex.: Exemplo, Produto…" autocomplete="off" /></label>
+          <label class="field"><span>ORDENAR POR</span><select id="sort"><option value="name">Nome</option><option value="price">Preço</option><option value="stock">Estoque</option><option value="version">Versão</option></select></label>
+          <label class="field"><span>DIREÇÃO</span><select id="direction"><option value="asc">A-Z / crescente</option><option value="desc">Z-A / decrescente</option></select></label>
+          <label class="field compact-select"><span>PÁGINA</span><select id="size"><option value="10">10 linhas</option><option value="20" selected>20 linhas</option><option value="50">50 linhas</option><option value="100">100 linhas</option></select></label>
+        </div>
+        <label class="checkbox-line"><input id="compact" type="checkbox"/> Consultar apenas <code>id, name, price, stock, version</code> (projeção BJORM)</label>
+        <div class="table-container">
+          <table><thead><tr><th>PRODUTO</th><th>PREÇO</th><th>ESTOQUE</th><th>STATUS</th><th>VERSÃO</th><th class="actions-col">AÇÕES</th></tr></thead>
+            <tbody id="products"><tr><td colspan="6" class="empty">Carregando produtos…</td></tr></tbody></table>
+        </div>
+        <div class="pagination"><span id="page-description">—</span><div><button type="button" class="button ghost" id="previous">← Anterior</button><span id="page-number">—</span><button type="button" class="button ghost" id="next">Próxima →</button></div></div>
+      </div>
+
+      <aside class="panel editor">
+        <div class="panel-title"><div><p class="eyebrow">02 / CRUD</p><h2 id="form-title">Novo produto</h2></div><button type="button" class="button ghost" id="reset">Limpar</button></div>
+        <form id="product-form">
+          <input id="product-id" type="hidden"><input id="product-version" type="hidden">
+          <label class="field"><span>NOME *</span><input id="name" required maxlength="120" placeholder="Ex.: Material pedagógico" /></label>
+          <label class="field"><span>DESCRIÇÃO</span><textarea id="description" rows="3" maxlength="800" placeholder="Detalhes opcionais"></textarea></label>
+          <div class="input-pair"><label class="field"><span>PREÇO (R$) *</span><input id="price" required type="number" step="0.01" min="0" max="9999999999.99" value="19.90" /></label>
+          <label class="field"><span>ESTOQUE *</span><input id="stock" required type="number" step="1" min="0" value="10" /></label></div>
+          <label class="checkbox-line"><input id="active" type="checkbox" checked> Produto ativo</label>
+          <button type="submit" class="button primary full-width" id="save">Salvar produto <span>→</span></button>
+          <p class="hint">Updates e deletes usam <code>@Version</code> para detectar conflitos de concorrência (HTTP 409).</p>
+        </form>
+      </aside>
+    </section>
+
+    <section class="panel benchmark">
+      <div class="panel-title benchmark-title"><div><p class="eyebrow">03 / ANÁLISE DE DESEMPENHO</p><h2>Laboratório de transações</h2>
+        <p>Compare BJORM e JDBC manual sobre o mesmo PostgreSQL. Cada amostra executa <strong>INSERT → SELECT → DELETE</strong> dentro de uma transação com commit.</p></div>
+        <span class="test-label">SERVER-SIDE METRICS</span></div>
+      <div class="benchmark-controls">
+        <label class="field"><span>TRANSAÇÕES / WORKER</span><input id="iterations" type="number" min="10" max="500" step="10" value="100" /></label>
+        <label class="field"><span>WARM-UP / MODO</span><input id="warmup" type="number" min="0" max="100" value="20" /></label>
+        <label class="field"><span>WORKERS CONCORRENTES</span><select id="concurrency"><option value="1" selected>1 worker</option><option value="2">2 workers</option><option value="4">4 workers</option><option value="8">8 workers</option></select></label>
+        <button class="button primary bench-button" id="run-benchmark" type="button">▶ Executar comparação</button>
+      </div>
+      <p class="benchmark-note">Amostras coletadas no servidor com <code>System.nanoTime()</code>; incluem aquisição de conexão, execução no banco e commit. Não incluem latência HTTP ou renderização do navegador. Os modos rodam sequencialmente, com aquecimento próprio; resultados variam conforme hardware, carga e caches.</p>
+      <div id="benchmark-message" class="muted">Configure os parâmetros e execute o comparativo.</div>
+      <div id="benchmark-results" class="benchmark-results" hidden>
+        <div class="comparison-cards">
+          <article class="engine-card"><div class="engine-heading"><span class="engine-icon">B</span><strong>BJORM</strong><small>GENERATED JDBC</small></div><div class="engine-metric"><strong id="bjorm-p50">—</strong><span>ms · p50</span></div><div id="bjorm-ops" class="ops">— tx/s</div></article>
+          <article class="engine-card"><div class="engine-heading"><span class="engine-icon muted-icon">J</span><strong>JDBC</strong><small>HAND-WRITTEN</small></div><div class="engine-metric"><strong id="jdbc-p50">—</strong><span>ms · p50</span></div><div id="jdbc-ops" class="ops">— tx/s</div></article>
+        </div>
+        <div class="table-container"><table class="results-table"><thead><tr><th>IMPLEMENTAÇÃO</th><th>TX</th><th>MÉDIA</th><th>P50</th><th>P95</th><th>P99</th><th>MAX</th><th>TX/S</th></tr></thead><tbody id="benchmark-table"></tbody></table></div>
+      </div>
+    </section>
+    <footer><span>BJORM LAB · ambiente de demonstração, não exponha publicamente sem autenticação.</span><span>Java 25 · Spring Boot 4.0.3 · PostgreSQL 17</span></footer>
+  </main>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>
