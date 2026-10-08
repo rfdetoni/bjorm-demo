@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.12-SNAPSHOT
+
+- Stop publishing PostgreSQL 5432 on the host in Docker/Podman Compose; the app already connects over the internal service network.
+- Preserve persistent database volume and avoid rootless Podman conflicts with host PostgreSQL instances.
+
 ## 0.1.11-SNAPSHOT
 
 - Upgrade to BJORM 0.3.13-SNAPSHOT and pin its exact main commit in Dockerfile and GitHub Actions.

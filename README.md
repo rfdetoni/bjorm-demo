@@ -10,7 +10,7 @@ The application intentionally **does not use Hibernate, JPA, Spring Data reposit
 docker compose up --build
 ```
 
-Open **http://localhost:8080**. The compose stack starts PostgreSQL, waits for a healthy database and then starts Spring Boot. On the first run the application initializes the `products` table and index. PostgreSQL data lives in the `pgdata` named volume.
+Open **http://localhost:8080**. The compose stack starts PostgreSQL, waits for a healthy database and then starts Spring Boot. The database is reachable by the app at `postgres:5432` on the Compose network; PostgreSQL's port **is not published on the host**, avoiding `127.0.0.1:5432` conflicts with existing PostgreSQL or Podman containers. To connect from a host-side database client, add an optional port mapping such as `127.0.0.1:5433:5432` under the `postgres` service. On the first run the application initializes the `products` table and index. PostgreSQL data lives in the `pgdata` named volume.
 
 ```sh
 docker compose down       # stop without deleting data
