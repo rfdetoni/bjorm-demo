@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.7-SNAPSHOT
+
+- Fix HTTP smoke assertion to use Spring Data `Slice` JSON property `last` (instead of a nonexistent `hasNext` property).
+- Assert count metadata is absent from `Slice`, preserving zero-count pagination semantics.
+- No production persistence change; continue to pin BJORM 0.3.8-SNAPSHOT.
+
 ## 0.1.6-SNAPSHOT
 
 - Use inferred UUID v7 generation in `@Id` POJOs and immutable product records, without explicitly calling UUID.randomUUID in CRUD or seed paths.

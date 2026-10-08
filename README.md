@@ -93,3 +93,5 @@ Sort names must correspond to mapped entity properties. The existing `/api/produ
 ## Native BJORM IDs
 
 The Product `record` declares only `@Id UUID id`: `ProductService.create` constructs it with a null ID and calls `db.insertReturning(product)`, receiving a fresh UUID v7 ID in the saved record. The HTML CRUD therefore never needs to supply a generated ID. POJO orders and lines also declare `@Id UUID id` without configuration, and the mapper fills their IDs during cascade inserts.
+
+Spring Data's JSON serialization of `Slice` exposes `last=false` when more records exist (rather than a `hasNext` field). The HTTP acceptance test checks the actual serialized response and confirms that `totalElements` is absent from the slice.

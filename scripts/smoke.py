@@ -62,7 +62,8 @@ pageable = request("GET", "/api/products/page?page=0&size=5&sort=name,asc")
 assert len(pageable["content"]) == 5 and pageable["totalElements"] >= 30
 assert pageable["totalPages"] >= 6
 slice1 = request("GET", "/api/products/slice?page=0&size=5&sort=name,asc")
-assert len(slice1["content"]) == 5 and slice1["hasNext"] is True
+assert len(slice1["content"]) == 5 and slice1["last"] is False
+assert "totalElements" not in slice1, "Slice response must not include count metadata"
 slice2 = request("GET", "/api/products/slice?page=1&size=5&sort=name,asc")
 assert len(slice2["content"]) == 5
 assert request("GET", "/api/products/page?sort=notMapped,asc", expected=400)
