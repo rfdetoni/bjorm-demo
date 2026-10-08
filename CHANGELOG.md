@@ -1,9 +1,11 @@
 # Changelog
 
-## 0.1.4-SNAPSHOT
+## 0.1.5-SNAPSHOT
 
-- Register `DemoOrder` and `DemoOrderLine` generated mappers as Spring beans, fixing real-PostgreSQL POST /api/orders acceptance.
-- Preserve CRUD, upsert, cascade, UUID v7 and unlimited benchmark load gates.
+- Add `/api/products/page` and `/api/products/slice` accepting Spring `Pageable` parameters.
+- Verify pagination metadata, navigation and invalid sort property handling with PostgreSQL HTTP smoke checks.
+- Use BJORM 0.3.7-SNAPSHOT and update the pinned reproducible library build.
+
 
 ## 0.1.3-SNAPSHOT
 

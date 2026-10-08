@@ -17,7 +17,7 @@ docker compose down       # stop without deleting data
 docker compose down -v    # reset DB and delete the demo data
 ```
 
-The Dockerfile compiles BJORM **from the pinned public GitHub commit** `b3ec0193007e5c84fd15a54607ddcb95f87b7a86` and installs it into the build stage's local Maven repository. This avoids requiring a GitHub Packages personal access token in Docker. The actual demo depends on the official BJORM Maven coordinates `com.github.rfdetoni.bjorm:*:0.3.4-SNAPSHOT`, rather than copying ORM source into the demo.
+The Dockerfile compiles BJORM **from the pinned public GitHub commit** `119c1ead370a851f17625e24c4c700f5cf9af652` and installs it into the build stage's local Maven repository. This avoids requiring a GitHub Packages personal access token in Docker. The actual demo depends on the official BJORM Maven coordinates `com.github.rfdetoni.bjorm:*:0.3.4-SNAPSHOT`, rather than copying ORM source into the demo.
 
 ## Features
 
@@ -40,7 +40,7 @@ You'll need PostgreSQL 17, Java 25 and Maven 3.9+. Install the [BJORM library](h
 
 ```sh
 git clone https://github.com/rfdetoni/bjorm.git ../bjorm
-(cd ../bjorm && git checkout b3ec0193007e5c84fd15a54607ddcb95f87b7a86 && mvn -pl bjorm-core,bjorm-processor,bjorm-spring-boot -am -DskipTests install)
+(cd ../bjorm && git checkout 119c1ead370a851f17625e24c4c700f5cf9af652 && mvn -pl bjorm-core,bjorm-processor,bjorm-spring-boot -am -DskipTests install)
 docker compose up -d postgres
 mvn spring-boot:run
 ```
@@ -82,3 +82,10 @@ The demo starts at `0.1.1-SNAPSHOT` and changes to it go to the `main` branch wi
 ### Maven snapshot/release
 
 Every validated `main` push builds Java 25, runs the PostgreSQL HTTP smoke test, and deploys the demo's `0.1.1-SNAPSHOT` Maven package to `https://maven.pkg.github.com/rfdetoni/bjorm-demo`. Release manually via **Actions → release-demo → Run workflow** with `version=0.1.0` to publish the stable artifact and advance `main` to `0.1.1-SNAPSHOT`. The release workflow needs GitHub Actions write permission to push commits/tags. A GitHub Packages deployment can require repository package permissions; failures are visible in Actions. No secrets are committed.
+
+### Spring Pageable endpoints (BJORM 0.3.7)
+
+`GET /api/products/page?page=0&size=10&sort=name,asc` returns `Page<Product>` and executes a `COUNT(*)`.
+`GET /api/products/slice?page=0&size=10&sort=name,asc` returns `Slice<Product>` and **does not execute COUNT**.
+Both accept `search`, `sort` and `page`, and the controller receives `Pageable` automatically via Spring Data web support.
+Sort names must correspond to mapped entity properties. The existing `/api/products` endpoint remains for the HTML dashboard.

@@ -30,7 +30,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: rfdetoni/bjorm
-          ref: b3ec0193007e5c84fd15a54607ddcb95f87b7a86
+          ref: 119c1ead370a851f17625e24c4c700f5cf9af652
           path: bjorm-lib
       - uses: actions/setup-java@v4
         with:

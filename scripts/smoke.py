@@ -56,6 +56,16 @@ assert request("POST", "/api/products/seed?count=30")["inserted"] == 30
 page = request("GET", "/api/products?page=1&size=10")
 assert len(page["items"]) == 10 and page["total"] >= 30
 prev = page["total"]
+# Spring Data Pageable -> BJORM Page and Slice; only Page counts rows.
+pageable = request("GET", "/api/products/page?page=0&size=5&sort=name,asc")
+assert len(pageable["content"]) == 5 and pageable["totalElements"] >= 30
+assert pageable["totalPages"] >= 6
+slice1 = request("GET", "/api/products/slice?page=0&size=5&sort=name,asc")
+assert len(slice1["content"]) == 5 and slice1["hasNext"] is True
+slice2 = request("GET", "/api/products/slice?page=1&size=5&sort=name,asc")
+assert len(slice2["content"]) == 5
+assert request("GET", "/api/products/page?sort=notMapped,asc", expected=400)
+assert request("GET", "/api/products/slice?sort=notMapped,asc", expected=400)
 benchmark = request("POST", "/api/benchmark", {"iterations": 10, "warmup": 1, "concurrency": 1})
 assert [x["engine"] for x in benchmark] == ["BJORM", "JDBC"]
 assert all(x["transactions"] == 10 and x["p95Ms"] >= 0 for x in benchmark)
