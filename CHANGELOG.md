@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.13-SNAPSHOT
+
+- Upgrade the demo's Spring Boot parent to latest stable 4.1.1 and BJORM adapter/core to 0.3.14-SNAPSHOT.
+- Pin the matching BJORM commit in Docker and Actions and validate PostgreSQL HTTP CRUD with Spring-managed `@Transactional` commit/rollback.
+
 ## 0.1.12-SNAPSHOT
 
 - Stop publishing PostgreSQL 5432 on the host in Docker/Podman Compose; the app already connects over the internal service network.

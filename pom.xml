@@ -3,16 +3,16 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.github.rfdetoni</groupId>
   <artifactId>bjorm-demo</artifactId>
-  <version>0.1.12-SNAPSHOT</version>
+  <version>0.1.13-SNAPSHOT</version>
   <name>BJORM Demo</name>
   <description>Full CRUD and PostgreSQL transaction benchmarks powered by BJORM</description>
   <properties>
     <java.version>25</java.version>
-    <bjorm.version>0.3.13-SNAPSHOT</bjorm.version>
+    <bjorm.version>0.3.14-SNAPSHOT</bjorm.version>
   </properties>
   <parent>
     <groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-parent</artifactId>
-    <version>4.0.3</version><relativePath/>
+    <version>4.1.1</version><relativePath/>
   </parent>
   <dependencies>
     <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-webmvc</artifactId></dependency>
