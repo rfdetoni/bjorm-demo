@@ -17,7 +17,7 @@ docker compose down       # stop without deleting data
 docker compose down -v    # reset DB and delete the demo data
 ```
 
-The Dockerfile compiles BJORM **from the pinned public GitHub commit** `45b280873c04d4377741f0176dc952ffb57b6e16` and installs it into the build stage's local Maven repository. This avoids requiring a GitHub Packages personal access token in Docker. The actual demo depends on the official BJORM Maven coordinates `com.github.rfdetoni.bjorm:*:0.3.14-SNAPSHOT`, rather than copying ORM source into the demo.
+The Dockerfile compiles BJORM **from the pinned public GitHub commit** `ada6a4b8a70819c16e70a049c95640d3a7ef31ba` and installs it into the build stage's local Maven repository. This avoids requiring a GitHub Packages personal access token in Docker. The actual demo depends on the official BJORM Maven coordinates `com.github.rfdetoni.bjorm:*:0.3.15-SNAPSHOT`, rather than copying ORM source into the demo.
 
 ## Features
 
@@ -106,11 +106,11 @@ Configure `BJORM_QUERY_TIMEOUT_SECONDS` (default 30), `BJORM_MAX_BUFFERED_ROWS` 
 
 ### Driver-side result budget and benchmark parity (0.1.9)
 
-BJORM 0.3.14-SNAPSHOT applies maxBufferedRows + 1 at the JDBC PreparedStatement level for materialized SELECTs (including eager joined graphs), avoiding uncontrolled driver-side result buffering. The demo's JDBC handwritten benchmark now sets the same statement timeout as the BJORM variant. The Dockerfile and CI use BJORM commit `45b280873c04d4377741f0176dc952ffb57b6e16`.
+BJORM 0.3.15-SNAPSHOT applies maxBufferedRows + 1 at the JDBC PreparedStatement level for materialized SELECTs (including eager joined graphs), avoiding uncontrolled driver-side result buffering. The demo's JDBC handwritten benchmark now sets the same statement timeout as the BJORM variant. The Dockerfile and CI use BJORM commit `ada6a4b8a70819c16e70a049c95640d3a7ef31ba`.
 
 ### SQL dialect selection
 
-BJORM 0.3.14-SNAPSHOT supports `SqlDialect` with PostgreSQL and MySQL 8.4 implementations. The demo explicitly uses `bjorm.dialect=${BJORM_DIALECT:postgresql}`, backed by PostgreSQL 17 in Docker Compose; changing the setting alone does not replace the demo's PostgreSQL schema, driver or container. The library's MySQL support is tested separately in [BJORM Actions](https://github.com/rfdetoni/bjorm/actions). The demo's `@Children(type=JoinType.LEFT)` preserves orders without lines; the DSL also supports `.join/leftJoin/rightJoin/fullJoin(...).on(...)` (FULL is rejected on MySQL).
+BJORM 0.3.15-SNAPSHOT supports `SqlDialect` with PostgreSQL and MySQL 8.4 implementations. The demo explicitly uses `bjorm.dialect=${BJORM_DIALECT:postgresql}`, backed by PostgreSQL 17 in Docker Compose; changing the setting alone does not replace the demo's PostgreSQL schema, driver or container. The library's MySQL support is tested separately in [BJORM Actions](https://github.com/rfdetoni/bjorm/actions). The demo's `@Children(type=JoinType.LEFT)` preserves orders without lines; the DSL also supports `.join/leftJoin/rightJoin/fullJoin(...).on(...)` (FULL is rejected on MySQL).
 
 ### Spring Boot 4.1.1 compatibility
 

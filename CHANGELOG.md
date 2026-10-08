@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.14-SNAPSHOT
+
+- Pin BJORM 0.3.15-SNAPSHOT with compile-time inherited fields and typed JSON codec support.
+- Keep Spring Boot 4.1.1 and PostgreSQL HTTP/transactional validation unchanged.
+
 ## 0.1.13-SNAPSHOT
 
 - Upgrade the demo's Spring Boot parent to latest stable 4.1.1 and BJORM adapter/core to 0.3.14-SNAPSHOT.
