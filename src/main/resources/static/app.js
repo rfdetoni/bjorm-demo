@@ -89,8 +89,11 @@ async function seedData() {
 function cell(text) {return `<td>${escapeHtml(text)}</td>`;}
 async function runBenchmark() {
   const request = {iterations: Number($('iterations').value), warmup: Number($('warmup').value), concurrency: Number($('concurrency').value)};
-  if (!Number.isInteger(request.iterations) || request.iterations < 10 || request.iterations > 500 ||
-      !Number.isInteger(request.warmup) || request.warmup < 0 || request.warmup > 100) {toast('Parâmetros fora dos limites.',true);return;}
+  if (!Number.isSafeInteger(request.iterations) || request.iterations < 1 ||
+      !Number.isSafeInteger(request.warmup) || request.warmup < 0 ||
+      !Number.isSafeInteger(request.concurrency) || request.concurrency < 1) {
+    toast('Informe números inteiros válidos (transações e workers ≥ 1; warm-up ≥ 0).', true); return;
+  }
   const button = $('run-benchmark'); button.disabled = true; button.textContent = 'Executando…';
   $('benchmark-results').hidden = true; $('benchmark-message').textContent = 'Executando comparação ABBA no PostgreSQL (BJORM / JDBC / JDBC / BJORM)…';
   try {
@@ -117,3 +120,40 @@ $('next').addEventListener('click', () => { if (page < pageCount - 1) {page++; l
 for (const id of ['sort','direction','size','compact']) $(id).addEventListener('change', () => {page=0;loadProducts();});
 $('search').addEventListener('input', () => {clearTimeout(debounce);debounce=setTimeout(() => {page=0;loadProducts();},280);});
 resetForm(); loadProducts();
+
+// Small, explicit demonstration of graph persistence; not part of the benchmark samples.
+let demoOrder = null;
+function renderOrder(message) {
+  $('order-status').textContent = message;
+  $('upsert-order').disabled = !demoOrder;
+  $('delete-order').disabled = !demoOrder;
+}
+$('create-order').addEventListener('click', async () => {
+  try {
+    demoOrder = await api('/api/orders', {method: 'POST', body: JSON.stringify({
+      customer: 'Escola demonstração', lines: [
+        {sku: 'LETRAS', quantity: 2}, {sku: 'NÚMEROS', quantity: 4}
+      ]
+    })});
+    renderOrder(`Pedido UUID v7 ${demoOrder.id} criado com ${demoOrder.lines.length} itens.`);
+  } catch (error) { toast(error.message, true); }
+});
+$('upsert-order').addEventListener('click', async () => {
+  if (!demoOrder) return;
+  try {
+    demoOrder = await api(`/api/orders/${encodeURIComponent(demoOrder.id)}/upsert`, {
+      method: 'PUT', body: JSON.stringify({customer: 'Escola atualizada',
+        lines: demoOrder.lines.map(line => ({id: line.id, sku: line.sku, quantity: line.quantity + 1}))})
+    });
+    renderOrder(`Upsert concluído no pedido ${demoOrder.id}; quantidades atualizadas.`);
+  } catch (error) { toast(error.message, true); }
+});
+$('delete-order').addEventListener('click', async () => {
+  if (!demoOrder) return;
+  try {
+    const id = demoOrder.id;
+    await api(`/api/orders/${encodeURIComponent(id)}`, {method: 'DELETE'});
+    demoOrder = null;
+    renderOrder(`Pedido ${id} e todos os itens persistidos foram excluídos.`);
+  } catch (error) { toast(error.message, true); }
+});

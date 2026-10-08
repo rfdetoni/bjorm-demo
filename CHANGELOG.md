@@ -1,14 +1,17 @@
 # Changelog
 
-## 0.1.2-SNAPSHOT
+## 0.1.3-SNAPSHOT
 
-- Pin the reproducible demo build to BJORM 0.3.5-SNAPSHOT with the Maven processor resolution and typed binder fixes.
+- Remove fixed upper bounds for benchmark transactions/worker, warm-up and concurrent workers in the REST API and HTML interface.
+- Use bounded-memory HdrHistogram sampling (approximate three-significant-digit latency percentiles) instead of storing every transaction latency.
+- Use Java virtual threads for benchmark workers and configurable PostgreSQL connection pool size / connection timeout; retain input sanity checks and ABBA comparison.
+
 
 ## 0.1.1-SNAPSHOT
 
-- Compare BJORM and JDBC in balanced ABBA order with per-worker warmup and equal total transactions.
-- Match JDBC and BJORM record materialization and primitive SQL NULL checks.
-- Upgrade to BJORM 0.3.4-SNAPSHOT with direct BigDecimal bindings.
+- Make the benchmark comparison more equivalent: JDBC materializes the same Product record and checks primitive SQL NULLs.
+- Alternate benchmark execution in ABBA order, warm up every worker before measurement and aggregate both passes per engine.
+- Upgrade the pinned BJORM library to 0.3.4-SNAPSHOT (typed BigDecimal binder).
 
 ## 0.1.0-SNAPSHOT
 

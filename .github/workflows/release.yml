@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Current snapshot version without -SNAPSHOT (e.g. 0.1.0)'
+        description: 'Current snapshot version without -SNAPSHOT (e.g. 0.1.3)'
         required: true
         type: string
 permissions:
@@ -21,7 +21,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: rfdetoni/bjorm
-          ref: 303846f1dbe7a2a59b4751e9a1b088ee526d2bef
+          ref: b3ec0193007e5c84fd15a54607ddcb95f87b7a86
           path: bjorm-lib
       - uses: actions/setup-java@v4
         with:

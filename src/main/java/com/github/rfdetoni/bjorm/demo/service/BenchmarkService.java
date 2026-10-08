@@ -5,6 +5,7 @@ import com.github.rfdetoni.bjorm.JdbcValues;
 import com.github.rfdetoni.bjorm.demo.api.BenchmarkRequest;
 import com.github.rfdetoni.bjorm.demo.api.BenchmarkResult;
 import com.github.rfdetoni.bjorm.demo.domain.Product;
+import org.HdrHistogram.Histogram;
 import org.springframework.stereotype.Service;
 
 import javax.sql.DataSource;
@@ -17,7 +18,7 @@ import java.util.concurrent.*;
  * ABBA comparison of three equal statements per transaction (INSERT, SELECT, DELETE).
  * Samples include connection acquisition, commit, generated mapping and JDBC driver time,
  * but exclude HTTP/network/browser rendering and object creation preceding each operation.
- * This is a bounded demonstration, not a calibrated performance benchmark.
+ * A per-worker histogram retains approximate latency percentiles without memory growth per transaction.
  */
 @Service
 public class BenchmarkService {
@@ -30,9 +31,8 @@ public class BenchmarkService {
     public BenchmarkService(Bjorm db, DataSource source) { this.db = db; this.source = source; }
 
     public List<BenchmarkResult> compare(BenchmarkRequest request) {
-        // Run separate, balanced passes to reduce cache/JIT/time-drift bias without pool contention.
-        int first = (request.iterations() + 1) / 2;
-        int second = request.iterations() / 2;
+        long first = request.iterations() / 2 + request.iterations() % 2;
+        long second = request.iterations() / 2;
         Run bjorm1 = runVariant(true, first, request);
         Run jdbc1 = runVariant(false, first, request);
         Run jdbc2 = runVariant(false, second, request);
@@ -40,28 +40,35 @@ public class BenchmarkService {
         return List.of(aggregate("BJORM", bjorm1, bjorm2), aggregate("JDBC", jdbc1, jdbc2));
     }
 
-    private record Run(long[] measurements, long elapsedNs) {}
+    private record Run(Histogram measurements, long elapsedNs) {}
 
-    private Run runVariant(boolean bjorm, int iterationsPerWorker, BenchmarkRequest config) {
-        List<Future<long[]>> futures = new ArrayList<>();
+    private static Histogram histogram() {
+        Histogram histogram = new Histogram(3);
+        histogram.setAutoResize(true);
+        return histogram;
+    }
+
+    private Run runVariant(boolean bjorm, long iterationsPerWorker, BenchmarkRequest config) {
+        if (iterationsPerWorker == 0) return new Run(histogram(), 0);
+        List<Future<Histogram>> futures = new ArrayList<>();
         CountDownLatch warmupComplete = new CountDownLatch(config.concurrency());
         CountDownLatch startGate = new CountDownLatch(1);
         long started;
-        try (ExecutorService workers = Executors.newFixedThreadPool(config.concurrency())) {
+        try (ExecutorService workers = Executors.newVirtualThreadPerTaskExecutor()) {
             for (int i = 0; i < config.concurrency(); i++) {
                 futures.add(workers.submit(() -> {
-                    long[] times = new long[iterationsPerWorker];
+                    Histogram times = histogram();
                     try {
-                        for (int j = 0; j < config.warmup(); j++) operation(bjorm, sample());
+                        for (long j = 0; j < config.warmup(); j++) operation(bjorm, sample());
                     } finally {
                         warmupComplete.countDown();
                     }
                     startGate.await();
-                    for (int j = 0; j < times.length; j++) {
+                    for (long j = 0; j < iterationsPerWorker; j++) {
                         Product product = sample();
                         long before = System.nanoTime();
                         operation(bjorm, product);
-                        times[j] = System.nanoTime() - before;
+                        times.recordValue(Math.max(1, System.nanoTime() - before));
                     }
                     return times;
                 }));
@@ -75,14 +82,9 @@ public class BenchmarkService {
             }
             started = System.nanoTime();
             startGate.countDown();
-            long[] measurements = new long[iterationsPerWorker * config.concurrency()];
-            int position = 0;
+            Histogram measurements = histogram();
             try {
-                for (var future : futures) {
-                    long[] result = future.get();
-                    System.arraycopy(result, 0, measurements, position, result.length);
-                    position += result.length;
-                }
+                for (var future : futures) measurements.add(future.get());
             } catch (ExecutionException e) {
                 futures.forEach(f -> f.cancel(true));
                 throw new IllegalStateException("Falha no benchmark " + (bjorm ? "BJORM" : "JDBC"), e.getCause());
@@ -91,16 +93,19 @@ public class BenchmarkService {
                 Thread.currentThread().interrupt();
                 throw new IllegalStateException("Benchmark interrompido", e);
             }
-            long elapsed = System.nanoTime() - started;
-            return new Run(measurements, elapsed);
+            return new Run(measurements, System.nanoTime() - started);
         }
     }
 
     private static BenchmarkResult aggregate(String engine, Run a, Run b) {
-        long[] samples = Arrays.copyOf(a.measurements(), a.measurements().length + b.measurements().length);
-        System.arraycopy(b.measurements(), 0, samples, a.measurements().length, b.measurements().length);
-        Arrays.sort(samples);
-        return result(engine, samples, a.elapsedNs() + b.elapsedNs());
+        Histogram samples = a.measurements();
+        samples.add(b.measurements());
+        long n = samples.getTotalCount();
+        long elapsed = a.elapsedNs() + b.elapsedNs();
+        return new BenchmarkResult(engine, n, ms(samples.getMean()),
+            ms(samples.getValueAtPercentile(50)), ms(samples.getValueAtPercentile(95)),
+            ms(samples.getValueAtPercentile(99)), ms(samples.getMaxValue()),
+            n / (elapsed / 1_000_000_000.0), ms(elapsed));
     }
 
     private static Product sample() {
@@ -142,7 +147,6 @@ public class BenchmarkService {
                     ps.setObject(1, p.id());
                     try (ResultSet rs = ps.executeQuery()) {
                         if (!rs.next()) throw new SQLException("Readback failure");
-                        // Read and materialize exactly as BJORM's generated mapper does.
                         Product loaded = new Product(rs.getObject(1, UUID.class), rs.getString(2),
                             rs.getString(3), rs.getBigDecimal(4), JdbcValues.requiredInt(rs, 5),
                             JdbcValues.requiredBoolean(rs, 6), JdbcValues.requiredInt(rs, 7));
@@ -167,16 +171,5 @@ public class BenchmarkService {
         }
     }
 
-    private static BenchmarkResult result(String engine, long[] ns, long elapsed) {
-        double sum = 0;
-        for (long n : ns) sum += n;
-        int n = ns.length;
-        return new BenchmarkResult(engine, n, ms(sum / n), ms(percentile(ns, .50)),
-            ms(percentile(ns, .95)), ms(percentile(ns, .99)), ms(ns[n - 1]),
-            n / (elapsed / 1_000_000_000.0), ms(elapsed));
-    }
-    private static long percentile(long[] sorted, double probability) {
-        return sorted[Math.max(0, (int) Math.ceil(probability * sorted.length) - 1)];
-    }
     private static double ms(double nanoseconds) { return Math.round(nanoseconds / 1000.0) / 1000.0; }
 }

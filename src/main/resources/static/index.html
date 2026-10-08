@@ -57,17 +57,30 @@
       </aside>
     </section>
 
+    <section class="panel" aria-labelledby="orders-heading">
+      <div class="panel-title"><div><p class="eyebrow">03 / PERSISTÊNCIA ANINHADA</p>
+        <h2 id="orders-heading">UUID v7 · Upsert · Exclusão em cascata</h2>
+        <p>Crie um pedido com dois itens; atualize com upsert nativo e exclua o pai com os filhos na mesma transação.</p>
+      </div></div>
+      <div class="benchmark-controls">
+        <button class="button primary" type="button" id="create-order">Criar pedido e itens</button>
+        <button class="button ghost" type="button" id="upsert-order" disabled>Fazer upsert</button>
+        <button class="button ghost" type="button" id="delete-order" disabled>Excluir pai e filhos</button>
+      </div>
+      <p id="order-status" class="hint" aria-live="polite">Nenhum pedido de demonstração criado nesta sessão.</p>
+    </section>
+
     <section class="panel benchmark">
-      <div class="panel-title benchmark-title"><div><p class="eyebrow">03 / ANÁLISE DE DESEMPENHO</p><h2>Laboratório de transações</h2>
+      <div class="panel-title benchmark-title"><div><p class="eyebrow">04 / ANÁLISE DE DESEMPENHO</p><h2>Laboratório de transações</h2>
         <p>Compare BJORM e JDBC manual sobre o mesmo PostgreSQL. Cada amostra executa <strong>INSERT → SELECT → DELETE</strong> dentro de uma transação com commit.</p></div>
         <span class="test-label">SERVER-SIDE METRICS</span></div>
       <div class="benchmark-controls">
-        <label class="field"><span>TRANSAÇÕES / WORKER</span><input id="iterations" type="number" min="10" max="500" step="10" value="100" /></label>
-        <label class="field"><span>WARM-UP / MODO</span><input id="warmup" type="number" min="0" max="100" value="20" /></label>
-        <label class="field"><span>WORKERS CONCORRENTES</span><select id="concurrency"><option value="1" selected>1 worker</option><option value="2">2 workers</option><option value="4">4 workers</option><option value="8">8 workers</option></select></label>
+        <label class="field"><span>TRANSAÇÕES / WORKER</span><input id="iterations" type="number" min="1" step="1" value="100" /></label>
+        <label class="field"><span>WARM-UP / MODO</span><input id="warmup" type="number" min="0" value="20" /></label>
+        <label class="field"><span>WORKERS CONCORRENTES</span><input id="concurrency" type="number" min="1" step="1" value="4" /></label>
         <button class="button primary bench-button" id="run-benchmark" type="button">▶ Executar comparação</button>
       </div>
-      <p class="benchmark-note">Amostras coletadas no servidor com <code>System.nanoTime()</code>; incluem aquisição de conexão, execução no banco e commit. Não incluem latência HTTP ou renderização do navegador. Os modos rodam sequencialmente em ordem ABBA, com aquecimento por worker e materialização equivalente dos objetos; resultados variam conforme hardware, carga e caches.</p>
+      <p class="benchmark-note">Amostras coletadas no servidor com <code>System.nanoTime()</code>; incluem aquisição de conexão, execução no banco e commit. Não incluem latência HTTP ou renderização do navegador. Os modos rodam sequencialmente, com aquecimento próprio; resultados variam conforme hardware, carga e caches.</p>
       <div id="benchmark-message" class="muted">Configure os parâmetros e execute o comparativo.</div>
       <div id="benchmark-results" class="benchmark-results" hidden>
         <div class="comparison-cards">

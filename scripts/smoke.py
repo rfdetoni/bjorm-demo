@@ -59,5 +59,27 @@ prev = page["total"]
 benchmark = request("POST", "/api/benchmark", {"iterations": 10, "warmup": 1, "concurrency": 1})
 assert [x["engine"] for x in benchmark] == ["BJORM", "JDBC"]
 assert all(x["transactions"] == 10 and x["p95Ms"] >= 0 for x in benchmark)
+# Values that used to fail validation must now be accepted.
+large_iterations = request("POST", "/api/benchmark", {"iterations": 501, "warmup": 0, "concurrency": 1})
+assert all(x["transactions"] == 501 for x in large_iterations)
+large_warmup = request("POST", "/api/benchmark", {"iterations": 1, "warmup": 101, "concurrency": 1})
+assert all(x["transactions"] == 1 for x in large_warmup)
+more_workers = request("POST", "/api/benchmark", {"iterations": 1, "warmup": 0, "concurrency": 9})
+assert all(x["transactions"] == 9 for x in more_workers)
+assert request("POST", "/api/benchmark", {"iterations": 0, "warmup": 0, "concurrency": 1}, 400)
 assert request("GET", "/api/products")["total"] == prev, "Benchmarks must not leave any rows"
-print("PASS: HTML, CREATE, GET, PAGE, FIELDS, UPDATE, OPTIMISTIC LOCK, DELETE, BATCH, BJORM/JDBC TRANSACTIONS")
+order = request("POST", "/api/orders", {
+    "customer": "Escola exemplo", "lines": [{"sku": "MAT-001", "quantity": 2}]
+}, 201)
+assert order["id"] and order["lines"][0]["orderId"] == order["id"]
+assert int(order["id"][14], 16) == 7 and int(order["lines"][0]["id"][14], 16) == 7
+order_id = order["id"]
+line_id = order["lines"][0]["id"]
+assert len(request("GET", f"/api/orders/{order_id}")["lines"]) == 1
+updated = request("PUT", f"/api/orders/{order_id}/upsert", {
+    "customer": "Escola atualizada", "lines": [{"id": line_id, "sku": "MAT-002", "quantity": 3}]
+})
+assert updated["customer"] == "Escola atualizada" and updated["lines"][0]["sku"] == "MAT-002"
+request("DELETE", f"/api/orders/{order_id}", expected=204)
+request("GET", f"/api/orders/{order_id}", expected=404)
+print("PASS: CRUD, pagination, benchmark, UUID v7, upsert and nested cascade")
