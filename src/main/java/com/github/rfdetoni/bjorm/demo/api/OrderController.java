@@ -3,7 +3,6 @@ package com.github.rfdetoni.bjorm.demo.api;
 import com.github.rfdetoni.bjorm.Bjorm;
 import com.github.rfdetoni.bjorm.demo.domain.DemoOrder;
 import com.github.rfdetoni.bjorm.demo.domain.DemoOrderLine;
-import com.github.rfdetoni.bjorm.demo.domain.DemoOrderLine_;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import org.springframework.http.HttpStatus;
@@ -54,7 +53,7 @@ public class OrderController {
     public OrderView find(@PathVariable UUID id) {
         DemoOrder order = db.find(DemoOrder.class, id);
         if (order == null) throw new NoSuchElementException("Pedido não encontrado");
-        order.setLines(db.list(DemoOrderLine.class, DemoOrderLine_.orderId.eq(id)));
+        // @Children is fetched with the parent in one joined SQL statement.
         return view(order);
     }
 

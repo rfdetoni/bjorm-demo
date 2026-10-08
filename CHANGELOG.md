@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.8-SNAPSHOT
+
+- Upgrade BJORM to 0.3.9-SNAPSHOT with auto eager JOINs and per-instance JDBC query timeout, buffered row budget and fetch size.
+- Remove the per-order child SELECT in the REST controller; assert Spring @Transactional commit/rollback.
+- Tune PostgreSQL batch inserts with pgJDBC reWriteBatchedInserts.
+
 ## 0.1.7-SNAPSHOT
 
 - Fix HTTP smoke assertion to use Spring Data `Slice` JSON property `last` (instead of a nonexistent `hasNext` property).

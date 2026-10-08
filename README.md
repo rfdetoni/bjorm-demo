@@ -17,7 +17,7 @@ docker compose down       # stop without deleting data
 docker compose down -v    # reset DB and delete the demo data
 ```
 
-The Dockerfile compiles BJORM **from the pinned public GitHub commit** `bc646b84c69f681528ece67f6bb9239613fea44a` and installs it into the build stage's local Maven repository. This avoids requiring a GitHub Packages personal access token in Docker. The actual demo depends on the official BJORM Maven coordinates `com.github.rfdetoni.bjorm:*:0.3.8-SNAPSHOT`, rather than copying ORM source into the demo.
+The Dockerfile compiles BJORM **from the pinned public GitHub commit** `46ac28b9e1c9913c8fbd8afd5d33f55a71554062` and installs it into the build stage's local Maven repository. This avoids requiring a GitHub Packages personal access token in Docker. The actual demo depends on the official BJORM Maven coordinates `com.github.rfdetoni.bjorm:*:0.3.8-SNAPSHOT`, rather than copying ORM source into the demo.
 
 ## Features
 
@@ -40,7 +40,7 @@ You'll need PostgreSQL 17, Java 25 and Maven 3.9+. Install the [BJORM library](h
 
 ```sh
 git clone https://github.com/rfdetoni/bjorm.git ../bjorm
-(cd ../bjorm && git checkout bc646b84c69f681528ece67f6bb9239613fea44a && mvn -pl bjorm-core,bjorm-processor,bjorm-spring-boot -am -DskipTests install)
+(cd ../bjorm && git checkout 46ac28b9e1c9913c8fbd8afd5d33f55a71554062 && mvn -pl bjorm-core,bjorm-processor,bjorm-spring-boot -am -DskipTests install)
 docker compose up -d postgres
 mvn spring-boot:run
 ```
@@ -95,3 +95,10 @@ Sort names must correspond to mapped entity properties. The existing `/api/produ
 The Product `record` declares only `@Id UUID id`: `ProductService.create` constructs it with a null ID and calls `db.insertReturning(product)`, receiving a fresh UUID v7 ID in the saved record. The HTML CRUD therefore never needs to supply a generated ID. POJO orders and lines also declare `@Id UUID id` without configuration, and the mapper fills their IDs during cascade inserts.
 
 Spring Data's JSON serialization of `Slice` exposes `last=false` when more records exist (rather than a `hasNext` field). The HTTP acceptance test checks the actual serialized response and confirms that `totalElements` is absent from the slice.
+
+
+## Eager entity graph JOINs and JDBC safety (0.1.8-SNAPSHOT)
+
+`GET /api/orders/{id}` loads all `@Children` in the same SQL instruction via BJORM (LEFT JOIN; multiple sibling child sets use UNION ALL to avoid Cartesian multiplication). No query per child. This demo pins BJORM 0.3.9-SNAPSHOT to commit 46ac28b9e1c9913c8fbd8afd5d33f55a71554062. The Spring context test checks that `@Transactional` rollback and commit apply to BJORM writes.
+
+Configure `BJORM_QUERY_TIMEOUT_SECONDS` (default 30), `BJORM_MAX_BUFFERED_ROWS` (default 100000), and `BJORM_FETCH_SIZE` (default 128). Heavy graph fetches should paginate the roots; add an index on each child foreign-key column.
