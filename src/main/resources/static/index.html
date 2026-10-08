@@ -67,7 +67,7 @@
         <label class="field"><span>WORKERS CONCORRENTES</span><select id="concurrency"><option value="1" selected>1 worker</option><option value="2">2 workers</option><option value="4">4 workers</option><option value="8">8 workers</option></select></label>
         <button class="button primary bench-button" id="run-benchmark" type="button">▶ Executar comparação</button>
       </div>
-      <p class="benchmark-note">Amostras coletadas no servidor com <code>System.nanoTime()</code>; incluem aquisição de conexão, execução no banco e commit. Não incluem latência HTTP ou renderização do navegador. Os modos rodam sequencialmente, com aquecimento próprio; resultados variam conforme hardware, carga e caches.</p>
+      <p class="benchmark-note">Amostras coletadas no servidor com <code>System.nanoTime()</code>; incluem aquisição de conexão, execução no banco e commit. Não incluem latência HTTP ou renderização do navegador. Os modos rodam sequencialmente em ordem ABBA, com aquecimento por worker e materialização equivalente dos objetos; resultados variam conforme hardware, carga e caches.</p>
       <div id="benchmark-message" class="muted">Configure os parâmetros e execute o comparativo.</div>
       <div id="benchmark-results" class="benchmark-results" hidden>
         <div class="comparison-cards">

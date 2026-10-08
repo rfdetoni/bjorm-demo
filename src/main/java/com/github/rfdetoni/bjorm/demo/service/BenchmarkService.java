@@ -1,6 +1,7 @@
 package com.github.rfdetoni.bjorm.demo.service;
 
 import com.github.rfdetoni.bjorm.Bjorm;
+import com.github.rfdetoni.bjorm.JdbcValues;
 import com.github.rfdetoni.bjorm.demo.api.BenchmarkRequest;
 import com.github.rfdetoni.bjorm.demo.api.BenchmarkResult;
 import com.github.rfdetoni.bjorm.demo.domain.Product;
@@ -13,7 +14,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 /**
- * A/B comparison of three equal statements per transaction (INSERT, SELECT, DELETE).
+ * ABBA comparison of three equal statements per transaction (INSERT, SELECT, DELETE).
  * Samples include connection acquisition, commit, generated mapping and JDBC driver time,
  * but exclude HTTP/network/browser rendering and object creation preceding each operation.
  * This is a bounded demonstration, not a calibrated performance benchmark.
@@ -29,20 +30,32 @@ public class BenchmarkService {
     public BenchmarkService(Bjorm db, DataSource source) { this.db = db; this.source = source; }
 
     public List<BenchmarkResult> compare(BenchmarkRequest request) {
-        // Run sequentially: never pit BJORM and JDBC against each other simultaneously.
-        return List.of(runVariant("BJORM", request), runVariant("JDBC", request));
+        // Run separate, balanced passes to reduce cache/JIT/time-drift bias without pool contention.
+        int first = (request.iterations() + 1) / 2;
+        int second = request.iterations() / 2;
+        Run bjorm1 = runVariant(true, first, request);
+        Run jdbc1 = runVariant(false, first, request);
+        Run jdbc2 = runVariant(false, second, request);
+        Run bjorm2 = runVariant(true, second, request);
+        return List.of(aggregate("BJORM", bjorm1, bjorm2), aggregate("JDBC", jdbc1, jdbc2));
     }
 
-    private BenchmarkResult runVariant(String engine, BenchmarkRequest config) {
-        boolean bjorm = engine.equals("BJORM");
-        for (int i = 0; i < config.warmup(); i++) operation(bjorm, sample());
+    private record Run(long[] measurements, long elapsedNs) {}
+
+    private Run runVariant(boolean bjorm, int iterationsPerWorker, BenchmarkRequest config) {
         List<Future<long[]>> futures = new ArrayList<>();
+        CountDownLatch warmupComplete = new CountDownLatch(config.concurrency());
         CountDownLatch startGate = new CountDownLatch(1);
         long started;
         try (ExecutorService workers = Executors.newFixedThreadPool(config.concurrency())) {
             for (int i = 0; i < config.concurrency(); i++) {
                 futures.add(workers.submit(() -> {
-                    long[] times = new long[config.iterations()];
+                    long[] times = new long[iterationsPerWorker];
+                    try {
+                        for (int j = 0; j < config.warmup(); j++) operation(bjorm, sample());
+                    } finally {
+                        warmupComplete.countDown();
+                    }
                     startGate.await();
                     for (int j = 0; j < times.length; j++) {
                         Product product = sample();
@@ -53,9 +66,16 @@ public class BenchmarkService {
                     return times;
                 }));
             }
+            try {
+                warmupComplete.await();
+            } catch (InterruptedException e) {
+                futures.forEach(f -> f.cancel(true));
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("Benchmark interrupted during warmup", e);
+            }
             started = System.nanoTime();
             startGate.countDown();
-            long[] measurements = new long[config.iterations() * config.concurrency()];
+            long[] measurements = new long[iterationsPerWorker * config.concurrency()];
             int position = 0;
             try {
                 for (var future : futures) {
@@ -65,16 +85,22 @@ public class BenchmarkService {
                 }
             } catch (ExecutionException e) {
                 futures.forEach(f -> f.cancel(true));
-                throw new IllegalStateException("Falha no benchmark " + engine, e.getCause());
+                throw new IllegalStateException("Falha no benchmark " + (bjorm ? "BJORM" : "JDBC"), e.getCause());
             } catch (InterruptedException e) {
                 futures.forEach(f -> f.cancel(true));
                 Thread.currentThread().interrupt();
                 throw new IllegalStateException("Benchmark interrompido", e);
             }
             long elapsed = System.nanoTime() - started;
-            Arrays.sort(measurements);
-            return result(engine, measurements, elapsed);
+            return new Run(measurements, elapsed);
         }
+    }
+
+    private static BenchmarkResult aggregate(String engine, Run a, Run b) {
+        long[] samples = Arrays.copyOf(a.measurements(), a.measurements().length + b.measurements().length);
+        System.arraycopy(b.measurements(), 0, samples, a.measurements().length, b.measurements().length);
+        Arrays.sort(samples);
+        return result(engine, samples, a.elapsedNs() + b.elapsedNs());
     }
 
     private static Product sample() {
@@ -115,10 +141,13 @@ public class BenchmarkService {
                 try (PreparedStatement ps = c.prepareStatement(FIND)) {
                     ps.setObject(1, p.id());
                     try (ResultSet rs = ps.executeQuery()) {
-                        if (!rs.next() || !p.id().equals(rs.getObject(1, UUID.class))) throw new SQLException("Readback failure");
-                        // Read the same seven columns that BJORM's generated mapper reads.
-                        rs.getString(2); rs.getString(3); rs.getBigDecimal(4);
-                        rs.getInt(5); rs.getBoolean(6); rs.getInt(7);
+                        if (!rs.next()) throw new SQLException("Readback failure");
+                        // Read and materialize exactly as BJORM's generated mapper does.
+                        Product loaded = new Product(rs.getObject(1, UUID.class), rs.getString(2),
+                            rs.getString(3), rs.getBigDecimal(4), JdbcValues.requiredInt(rs, 5),
+                            JdbcValues.requiredBoolean(rs, 6), JdbcValues.requiredInt(rs, 7));
+                        if (!p.id().equals(loaded.id())) throw new SQLException("Readback failure");
+                        p = loaded;
                     }
                 }
                 try (PreparedStatement ps = c.prepareStatement(DELETE)) {

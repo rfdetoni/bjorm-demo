@@ -92,7 +92,7 @@ async function runBenchmark() {
   if (!Number.isInteger(request.iterations) || request.iterations < 10 || request.iterations > 500 ||
       !Number.isInteger(request.warmup) || request.warmup < 0 || request.warmup > 100) {toast('Parâmetros fora dos limites.',true);return;}
   const button = $('run-benchmark'); button.disabled = true; button.textContent = 'Executando…';
-  $('benchmark-results').hidden = true; $('benchmark-message').textContent = 'Executando transações no PostgreSQL (sequencialmente por implementação)…';
+  $('benchmark-results').hidden = true; $('benchmark-message').textContent = 'Executando comparação ABBA no PostgreSQL (BJORM / JDBC / JDBC / BJORM)…';
   try {
     const data = await api('/api/benchmark', {method:'POST', body:JSON.stringify(request)});
     const bjorm = data.find(x => x.engine === 'BJORM'); const jdbc = data.find(x => x.engine === 'JDBC');
