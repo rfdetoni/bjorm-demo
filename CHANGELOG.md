@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.4-SNAPSHOT
+
+- Register `DemoOrder` and `DemoOrderLine` generated mappers as Spring beans, fixing real-PostgreSQL POST /api/orders acceptance.
+- Preserve CRUD, upsert, cascade, UUID v7 and unlimited benchmark load gates.
+
 ## 0.1.3-SNAPSHOT
 
 - Remove fixed upper bounds for benchmark transactions/worker, warm-up and concurrent workers in the REST API and HTML interface.
