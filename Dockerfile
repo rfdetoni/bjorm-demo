@@ -1,6 +1,6 @@
 # The BJORM source is pinned to an exact upstream revision. No GitHub Packages token is needed.
 FROM maven:3.9-eclipse-temurin-25 AS build
-ARG BJORM_REF=46ac28b9e1c9913c8fbd8afd5d33f55a71554062
+ARG BJORM_REF=99dc954b39e4965a95b2ce3bc0106d53cf9b9382
 WORKDIR /build
 RUN git init /build/bjorm && cd /build/bjorm && \
     git remote add origin https://github.com/rfdetoni/bjorm.git && \

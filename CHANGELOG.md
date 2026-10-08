@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.9-SNAPSHOT
+
+- Pin BJORM 0.3.10-SNAPSHOT with JDBC maxRows protection and equalize benchmark statement timeouts between BJORM and handwritten JDBC.
+- Keep reproducible Docker/CI BJORM SHA and package versions synchronized.
+
 ## 0.1.8-SNAPSHOT
 
 - Upgrade BJORM to 0.3.9-SNAPSHOT with auto eager JOINs and per-instance JDBC query timeout, buffered row budget and fetch size.

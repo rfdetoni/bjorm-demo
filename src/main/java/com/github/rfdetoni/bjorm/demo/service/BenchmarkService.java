@@ -134,6 +134,8 @@ public class BenchmarkService {
             c.setAutoCommit(false);
             try {
                 try (PreparedStatement ps = c.prepareStatement(INSERT)) {
+                    if (db.options().queryTimeoutSeconds() > 0)
+                        ps.setQueryTimeout(db.options().queryTimeoutSeconds());
                     ps.setObject(1, p.id());
                     ps.setString(2, p.name());
                     ps.setString(3, p.description());
@@ -144,6 +146,8 @@ public class BenchmarkService {
                     if (ps.executeUpdate() != 1) throw new SQLException("Insert failure");
                 }
                 try (PreparedStatement ps = c.prepareStatement(FIND)) {
+                    if (db.options().queryTimeoutSeconds() > 0)
+                        ps.setQueryTimeout(db.options().queryTimeoutSeconds());
                     ps.setObject(1, p.id());
                     try (ResultSet rs = ps.executeQuery()) {
                         if (!rs.next()) throw new SQLException("Readback failure");
@@ -155,6 +159,8 @@ public class BenchmarkService {
                     }
                 }
                 try (PreparedStatement ps = c.prepareStatement(DELETE)) {
+                    if (db.options().queryTimeoutSeconds() > 0)
+                        ps.setQueryTimeout(db.options().queryTimeoutSeconds());
                     ps.setObject(1, p.id());
                     ps.setInt(2, p.version());
                     if (ps.executeUpdate() != 1) throw new SQLException("Delete failure");
