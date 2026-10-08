@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.2-SNAPSHOT
+
+- Pin the reproducible demo build to BJORM 0.3.5-SNAPSHOT with the Maven processor resolution and typed binder fixes.
+
 ## 0.1.1-SNAPSHOT
 
 - Compare BJORM and JDBC in balanced ABBA order with per-worker warmup and equal total transactions.

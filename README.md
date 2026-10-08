@@ -17,7 +17,7 @@ docker compose down       # stop without deleting data
 docker compose down -v    # reset DB and delete the demo data
 ```
 
-The Dockerfile compiles BJORM **from the pinned public GitHub commit** `0ff7f0c9393a5b75ced5d9f5088c659593c20fd3` and installs it into the build stage's local Maven repository. This avoids requiring a GitHub Packages personal access token in Docker. The actual demo depends on the official BJORM Maven coordinates `com.github.rfdetoni.bjorm:*:0.3.4-SNAPSHOT`, rather than copying ORM source into the demo.
+The Dockerfile compiles BJORM **from the pinned public GitHub commit** `c8b9eaaf652f3b17081a8dac05a57acaf906c3f8` and installs it into the build stage's local Maven repository. This avoids requiring a GitHub Packages personal access token in Docker. The actual demo depends on the official BJORM Maven coordinates `com.github.rfdetoni.bjorm:*:0.3.5-SNAPSHOT`, rather than copying ORM source into the demo.
 
 ## Features
 
@@ -40,7 +40,7 @@ You'll need PostgreSQL 17, Java 25 and Maven 3.9+. Install the [BJORM library](h
 
 ```sh
 git clone https://github.com/rfdetoni/bjorm.git ../bjorm
-(cd ../bjorm && git checkout 0ff7f0c9393a5b75ced5d9f5088c659593c20fd3 && mvn -pl bjorm-core,bjorm-processor,bjorm-spring-boot -am -DskipTests install)
+(cd ../bjorm && git checkout c8b9eaaf652f3b17081a8dac05a57acaf906c3f8 && mvn -pl bjorm-core,bjorm-processor,bjorm-spring-boot -am -DskipTests install)
 docker compose up -d postgres
 mvn spring-boot:run
 ```
@@ -77,8 +77,8 @@ PUT uses the same fields plus `"version": 0` from the last read, which is increm
 
 A GitHub Actions workflow compiles BJORM at the pinned commit, builds this demo with Java 25 and launches PostgreSQL 17 to test the running HTTP API, CRUD/paging/locking, and both benchmark paths. For a local disposable database, use `python3 scripts/smoke.py` against a running instance. The smoke test inserts, updates, deletes and seeds records, and **should never run against a production database**.
 
-The demo starts at `0.1.1-SNAPSHOT` and changes to it go to the `main` branch with a version bump. The BJORM library stays versioned independently (`0.3.4-SNAPSHOT` for this revision). Builds are pinned to the corresponding BJORM source commit; when upgrading the library, change the commit in both Dockerfile and workflow and update the Maven version together.
+The demo starts at `0.1.2-SNAPSHOT` and changes to it go to the `main` branch with a version bump. The BJORM library stays versioned independently (`0.3.5-SNAPSHOT` for this revision). Builds are pinned to the corresponding BJORM source commit; when upgrading the library, change the commit in both Dockerfile and workflow and update the Maven version together.
 
 ### Maven snapshot/release
 
-Every validated `main` push builds Java 25, runs the PostgreSQL HTTP smoke test, and deploys the demo's `0.1.1-SNAPSHOT` Maven package to `https://maven.pkg.github.com/rfdetoni/bjorm-demo`. Release manually via **Actions → release-demo → Run workflow** with `version=0.1.0` to publish the stable artifact and advance `main` to `0.1.1-SNAPSHOT`. The release workflow needs GitHub Actions write permission to push commits/tags. A GitHub Packages deployment can require repository package permissions; failures are visible in Actions. No secrets are committed.
+Every validated `main` push builds Java 25, runs the PostgreSQL HTTP smoke test, and deploys the demo's `0.1.2-SNAPSHOT` Maven package to `https://maven.pkg.github.com/rfdetoni/bjorm-demo`. Release manually via **Actions → release-demo → Run workflow** with `version=0.1.0` to publish the stable artifact and advance `main` to `0.1.2-SNAPSHOT`. The release workflow needs GitHub Actions write permission to push commits/tags. A GitHub Packages deployment can require repository package permissions; failures are visible in Actions. No secrets are committed.
