@@ -50,10 +50,9 @@ public class ProductService {
     }
 
     public Product create(ProductInput input) {
-        Product product = new Product(UUID.randomUUID(), input.name().trim(), input.description(),
+        Product product = new Product(null, input.name().trim(), input.description(),
             input.price(), input.stock(), input.active(), 0);
-        db.insert(product);
-        return product;
+        return db.insertReturning(product);
     }
 
     public Product update(UUID id, ProductInput input) {
@@ -100,10 +99,10 @@ public class ProductService {
         if (count < 1 || count > 2000) throw new IllegalArgumentException("Quantidade deve estar entre 1 e 2000");
         var items = new ArrayList<Product>(count);
         long seed = System.nanoTime();
-        for (int i = 0; i < count; i++) items.add(new Product(UUID.randomUUID(),
+        for (int i = 0; i < count; i++) items.add(new Product(null,
             "Exemplo " + seed + "-" + (i + 1), "Produto gerado para testar paginação",
             new BigDecimal("19.90").add(BigDecimal.valueOf(i % 50)), i % 100, true, 0));
-        db.batchInsert(items);
+        db.batchInsertReturning(items);
         return count;
     }
 

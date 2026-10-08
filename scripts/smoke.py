@@ -37,6 +37,7 @@ product = {"name": "Teste ponta a ponta", "description": "PostgreSQL + BJORM",
            "price": 29.9, "stock": 12, "active": True}
 created = request("POST", "/api/products", product, 201)
 assert created["version"] == 0
+assert int(created["id"][14], 16) == 7, "Generated product @Id must use UUID v7"
 pid = created["id"]
 assert request("GET", f"/api/products/{pid}")["id"] == pid
 assert request("GET", "/api/products?search=Teste&size=10")["total"] >= 1

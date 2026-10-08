@@ -1,10 +1,15 @@
 # Changelog
 
-## 0.1.5-SNAPSHOT
+## 0.1.6-SNAPSHOT
+
+- Use inferred UUID v7 generation in `@Id` POJOs and immutable product records, without explicitly calling UUID.randomUUID in CRUD or seed paths.
+- Persist new immutable Product records through `insertReturning` and seed through `batchInsertReturning`.
+- Upgrade to BJORM 0.3.8-SNAPSHOT with type-based IDs; preserve manual benchmark UUID creation for fair comparison.
+
 
 - Add `/api/products/page` and `/api/products/slice` accepting Spring `Pageable` parameters.
 - Verify pagination metadata, navigation and invalid sort property handling with PostgreSQL HTTP smoke checks.
-- Use BJORM 0.3.7-SNAPSHOT and update the pinned reproducible library build.
+- Use BJORM 0.3.8-SNAPSHOT and update the pinned reproducible library build.
 
 
 ## 0.1.3-SNAPSHOT

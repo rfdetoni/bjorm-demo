@@ -17,7 +17,7 @@ docker compose down       # stop without deleting data
 docker compose down -v    # reset DB and delete the demo data
 ```
 
-The Dockerfile compiles BJORM **from the pinned public GitHub commit** `119c1ead370a851f17625e24c4c700f5cf9af652` and installs it into the build stage's local Maven repository. This avoids requiring a GitHub Packages personal access token in Docker. The actual demo depends on the official BJORM Maven coordinates `com.github.rfdetoni.bjorm:*:0.3.4-SNAPSHOT`, rather than copying ORM source into the demo.
+The Dockerfile compiles BJORM **from the pinned public GitHub commit** `bc646b84c69f681528ece67f6bb9239613fea44a` and installs it into the build stage's local Maven repository. This avoids requiring a GitHub Packages personal access token in Docker. The actual demo depends on the official BJORM Maven coordinates `com.github.rfdetoni.bjorm:*:0.3.8-SNAPSHOT`, rather than copying ORM source into the demo.
 
 ## Features
 
@@ -40,7 +40,7 @@ You'll need PostgreSQL 17, Java 25 and Maven 3.9+. Install the [BJORM library](h
 
 ```sh
 git clone https://github.com/rfdetoni/bjorm.git ../bjorm
-(cd ../bjorm && git checkout 119c1ead370a851f17625e24c4c700f5cf9af652 && mvn -pl bjorm-core,bjorm-processor,bjorm-spring-boot -am -DskipTests install)
+(cd ../bjorm && git checkout bc646b84c69f681528ece67f6bb9239613fea44a && mvn -pl bjorm-core,bjorm-processor,bjorm-spring-boot -am -DskipTests install)
 docker compose up -d postgres
 mvn spring-boot:run
 ```
@@ -89,3 +89,7 @@ Every validated `main` push builds Java 25, runs the PostgreSQL HTTP smoke test,
 `GET /api/products/slice?page=0&size=10&sort=name,asc` returns `Slice<Product>` and **does not execute COUNT**.
 Both accept `search`, `sort` and `page`, and the controller receives `Pageable` automatically via Spring Data web support.
 Sort names must correspond to mapped entity properties. The existing `/api/products` endpoint remains for the HTML dashboard.
+
+## Native BJORM IDs
+
+The Product `record` declares only `@Id UUID id`: `ProductService.create` constructs it with a null ID and calls `db.insertReturning(product)`, receiving a fresh UUID v7 ID in the saved record. The HTML CRUD therefore never needs to supply a generated ID. POJO orders and lines also declare `@Id UUID id` without configuration, and the mapper fills their IDs during cascade inserts.

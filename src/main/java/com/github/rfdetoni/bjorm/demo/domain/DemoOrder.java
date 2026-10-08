@@ -9,7 +9,7 @@ import java.util.UUID;
 
 @Table("demo_orders")
 public class DemoOrder {
-    @Id(uuidV7 = true) private UUID id;
+    @Id private UUID id;
     private String customer;
     @Children(mappedBy = "orderId") private List<DemoOrderLine> lines = new ArrayList<>();
 

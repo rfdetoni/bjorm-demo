@@ -6,7 +6,7 @@ import java.util.UUID;
 
 @Table("demo_order_lines")
 public class DemoOrderLine {
-    @Id(uuidV7 = true) private UUID id;
+    @Id private UUID id;
     private UUID orderId;
     private String sku;
     private int quantity;
