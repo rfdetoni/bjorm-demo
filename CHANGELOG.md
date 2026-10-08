@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.11-SNAPSHOT
+
+- Upgrade to BJORM 0.3.13-SNAPSHOT and pin its exact main commit in Dockerfile and GitHub Actions.
+- Demonstrate explicit `@Children(type=JoinType.LEFT)` eager relations and configurable `bjorm.dialect` (PostgreSQL for the demo).
+- Keep real MySQL dialect validation in the BJORM library CI; the demo's schema and database remain PostgreSQL-specific.
+
+
 ## 0.1.9-SNAPSHOT
 
 - Pin BJORM 0.3.10-SNAPSHOT with JDBC maxRows protection and equalize benchmark statement timeouts between BJORM and handwritten JDBC.

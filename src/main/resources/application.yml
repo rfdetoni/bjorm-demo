@@ -20,5 +20,6 @@ server:
     include-message: never
 
 bjorm:
+  dialect: ${BJORM_DIALECT:postgresql}
   pagination:
     max-offset: ${BJORM_MAX_OFFSET:10000}

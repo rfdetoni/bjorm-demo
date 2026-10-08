@@ -17,7 +17,7 @@ docker compose down       # stop without deleting data
 docker compose down -v    # reset DB and delete the demo data
 ```
 
-The Dockerfile compiles BJORM **from the pinned public GitHub commit** `99dc954b39e4965a95b2ce3bc0106d53cf9b9382` and installs it into the build stage's local Maven repository. This avoids requiring a GitHub Packages personal access token in Docker. The actual demo depends on the official BJORM Maven coordinates `com.github.rfdetoni.bjorm:*:0.3.8-SNAPSHOT`, rather than copying ORM source into the demo.
+The Dockerfile compiles BJORM **from the pinned public GitHub commit** `8fa73425252297f8a39ea4a9576453ac862c67e5` and installs it into the build stage's local Maven repository. This avoids requiring a GitHub Packages personal access token in Docker. The actual demo depends on the official BJORM Maven coordinates `com.github.rfdetoni.bjorm:*:0.3.13-SNAPSHOT`, rather than copying ORM source into the demo.
 
 ## Features
 
@@ -40,7 +40,7 @@ You'll need PostgreSQL 17, Java 25 and Maven 3.9+. Install the [BJORM library](h
 
 ```sh
 git clone https://github.com/rfdetoni/bjorm.git ../bjorm
-(cd ../bjorm && git checkout 99dc954b39e4965a95b2ce3bc0106d53cf9b9382 && mvn -pl bjorm-core,bjorm-processor,bjorm-spring-boot -am -DskipTests install)
+(cd ../bjorm && git checkout 8fa73425252297f8a39ea4a9576453ac862c67e5 && mvn -pl bjorm-core,bjorm-processor,bjorm-spring-boot -am -DskipTests install)
 docker compose up -d postgres
 mvn spring-boot:run
 ```
@@ -99,11 +99,15 @@ Spring Data's JSON serialization of `Slice` exposes `last=false` when more recor
 
 ## Eager entity graph JOINs and JDBC safety (0.1.8-SNAPSHOT)
 
-`GET /api/orders/{id}` loads all `@Children` in the same SQL instruction via BJORM (LEFT JOIN; multiple sibling child sets use UNION ALL to avoid Cartesian multiplication). No query per child. This demo pins BJORM 0.3.9-SNAPSHOT to commit 99dc954b39e4965a95b2ce3bc0106d53cf9b9382. The Spring context test checks that `@Transactional` rollback and commit apply to BJORM writes.
+`GET /api/orders/{id}` loads all `@Children` in the same SQL instruction via BJORM (LEFT JOIN; multiple sibling child sets use UNION ALL to avoid Cartesian multiplication). No query per child. This demo pins BJORM 0.3.9-SNAPSHOT to commit 8fa73425252297f8a39ea4a9576453ac862c67e5. The Spring context test checks that `@Transactional` rollback and commit apply to BJORM writes.
 
 Configure `BJORM_QUERY_TIMEOUT_SECONDS` (default 30), `BJORM_MAX_BUFFERED_ROWS` (default 100000), and `BJORM_FETCH_SIZE` (default 128). Heavy graph fetches should paginate the roots; add an index on each child foreign-key column.
 
 
 ### Driver-side result budget and benchmark parity (0.1.9)
 
-BJORM 0.3.10-SNAPSHOT applies maxBufferedRows + 1 at the JDBC PreparedStatement level for materialized SELECTs (including eager joined graphs), avoiding uncontrolled driver-side result buffering. The demo's JDBC handwritten benchmark now sets the same statement timeout as the BJORM variant. The Dockerfile and CI use BJORM commit `99dc954b39e4965a95b2ce3bc0106d53cf9b9382`.
+BJORM 0.3.13-SNAPSHOT applies maxBufferedRows + 1 at the JDBC PreparedStatement level for materialized SELECTs (including eager joined graphs), avoiding uncontrolled driver-side result buffering. The demo's JDBC handwritten benchmark now sets the same statement timeout as the BJORM variant. The Dockerfile and CI use BJORM commit `8fa73425252297f8a39ea4a9576453ac862c67e5`.
+
+### SQL dialect selection
+
+BJORM 0.3.13-SNAPSHOT supports `SqlDialect` with PostgreSQL and MySQL 8.4 implementations. The demo explicitly uses `bjorm.dialect=${BJORM_DIALECT:postgresql}`, backed by PostgreSQL 17 in Docker Compose; changing the setting alone does not replace the demo's PostgreSQL schema, driver or container. The library's MySQL support is tested separately in [BJORM Actions](https://github.com/rfdetoni/bjorm/actions). The demo's `@Children(type=JoinType.LEFT)` preserves orders without lines; the DSL also supports `.join/leftJoin/rightJoin/fullJoin(...).on(...)` (FULL is rejected on MySQL).

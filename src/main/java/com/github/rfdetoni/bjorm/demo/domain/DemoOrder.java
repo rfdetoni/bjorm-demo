@@ -2,6 +2,7 @@ package com.github.rfdetoni.bjorm.demo.domain;
 
 import com.github.rfdetoni.bjorm.Children;
 import com.github.rfdetoni.bjorm.Id;
+import com.github.rfdetoni.bjorm.JoinType;
 import com.github.rfdetoni.bjorm.Table;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,7 +12,7 @@ import java.util.UUID;
 public class DemoOrder {
     @Id private UUID id;
     private String customer;
-    @Children(mappedBy = "orderId") private List<DemoOrderLine> lines = new ArrayList<>();
+    @Children(mappedBy = "orderId", type = JoinType.LEFT) private List<DemoOrderLine> lines = new ArrayList<>();
 
     public DemoOrder() {}
     public UUID getId() { return id; }
